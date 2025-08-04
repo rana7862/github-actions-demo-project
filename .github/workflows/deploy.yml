@@ -8,47 +8,40 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    container:
-      image: node:20
-
     steps:
-      # ✅ Checkout code
+      - uses: actions/checkout@v2
+
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      # ✅ Install dependencies & build
+        run: echo "Code checked out"
+      
       - name: Install dependencies
-        run: npm ci
-
+        run: npm install
+      
       - name: Build app
         run: npm run build
 
-      # ✅ Setup SSH key
       - name: Get ssh key and set permissions
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      # ✅ Copy build files to server
+      # NEW STEP: Ensure the destination directory exists
+      - name: Create destination directory on server
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p ~/node-app"
+      
       - name: Deploy using SCP
         run: |
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r ./dist
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/node-app
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            -r ./dist ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/node-app/
+          
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            ./package.json ./package-lock.json ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/node-app/
 
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \ ./package.json ./package-lock.json
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/node-app
-
-      # ✅ Install Node.js/npm/pm2 + Restart app
-      - name: Restart server
+      - name: Install dependencies and Restart app
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-          "sudo apt update -y && \
-           sudo apt install -y curl git && \
-           curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && \
-           sudo apt install -y nodejs && \
-           sudo npm install -g pm2 && \
-           cd ~/node-app && \
-           npm install --production && \
-           pm2 restart myapp || pm2 start npm --name myapp -- run start"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "\
+            cd ~/node-app && \
+            npm install && \
+            pm2 restart myapp || pm2 start npm --name 'myapp' -- start"
