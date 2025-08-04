@@ -1,4 +1,4 @@
-name: Deploy Project 
+name: deploy
 
 on:
   push:
@@ -6,21 +6,39 @@ on:
       - main
 
 jobs:
- deploy:
-  runs-on: ubuntu-latest
-  container:
-   image: node:20
-  steps:
-  - users: actions/checkout@v3
-     with:
-      node-version: 20
-  - run: npm ci 
-  - run: npm run built
-  - name: Get ssh key and set permissions
-    run:
-     mkdir -p ~/.ssh
-     echo "${{ secrets.SERVER_SSH_KEY}}" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
-  - name: Deploy using SCP
-     run: scp -o StrictHostkeychecking=no -i ~/.ssh/id_rsa -r ./dist/* ${{ secrets.SERVER_USER}}@${{ secrets.SERVER_HOST}}:~/node-app
-  - name: Restart server 
-     run: ssh -o StrictHostkeychecking=no -i ~/.ssh/id_rsa ${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}} "cd ~/node-app && npm install && pm2 restart 0"
+  deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: node:20
+
+    steps:
+      # ✅ Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # ✅ Install dependencies & build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      # ✅ Setup SSH key
+      - name: Get ssh key and set permissions
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      # ✅ Copy build files to server
+      - name: Deploy using SCP
+        run: |
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r ./dist/* \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/node-app
+
+      # ✅ Restart app on server
+      - name: Restart server
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+          "cd ~/node-app && npm install && pm2 restart 0"
