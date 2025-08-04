@@ -1,9 +1,9 @@
-name: deploy 
+name: Deploy Project 
 
 on:
- push:
-  branches:
-   - main
+  push:
+    branches:
+      - main
 
 jobs:
  deploy:
