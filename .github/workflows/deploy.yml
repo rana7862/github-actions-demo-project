@@ -36,6 +36,9 @@ jobs:
           scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r ./dist/* \
           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/node-app
 
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \ ./package*.json
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/node-app
+
       # ✅ Install Node.js/npm/pm2 + Restart app
       - name: Restart server
         run: |
