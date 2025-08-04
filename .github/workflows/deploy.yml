@@ -43,5 +43,5 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "\
             cd ~/node-app && \
-            npm install && \
+            npm install --include=dev && \
             pm2 restart myapp || pm2 start npm --name 'myapp' -- run start"
