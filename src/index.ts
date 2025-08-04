@@ -28,7 +28,7 @@ async function startServer() {
   try {
     // Load express app to listen on config port.
     const port = 3000
-    server = app.listen(port, () => {
+    server = app.listen(port,"0.0.0.0" ,() => {
       console.log(`Service ready on :${port}`)
     });
   } catch (error) {
