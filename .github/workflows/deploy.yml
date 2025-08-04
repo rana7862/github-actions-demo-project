@@ -33,10 +33,10 @@ jobs:
       # ✅ Copy build files to server
       - name: Deploy using SCP
         run: |
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r ./dist/* \
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r ./dist
           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/node-app
 
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \ ./package*.json
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \ ./package.json ./package-lock.json
           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/node-app
 
       # ✅ Install Node.js/npm/pm2 + Restart app
